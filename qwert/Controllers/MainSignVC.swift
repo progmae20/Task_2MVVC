@@ -32,7 +32,7 @@ class MainSignVC: UIViewController {
     }
     
     @IBAction func emailTFAction(_ sender: Any) {
-        getUser()
+        checkEmail1()
     }
     
     @IBAction func passwordTFAction(_ sender: Any) {
@@ -71,7 +71,8 @@ class MainSignVC: UIViewController {
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if let desination = segue.destination as? AlbumsVC,
             let user = sender as? User {
-            desination.user = user
+            let viewModel = ViewModelAlbumsVC(user: user)
+            desination.viewModel = viewModel
         }
     }
 

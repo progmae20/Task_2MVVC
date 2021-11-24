@@ -11,7 +11,10 @@ class AlbumsCellVC: UITableViewCell {
 
     @IBOutlet weak var nameAlbum: UILabel!
     
-    func configure(albums: Album) {
-        nameAlbum.text = albums.title
+    var viewModel: ViewModelAlbumsCellProtocol? {
+        willSet(viewModel) {
+            guard let viewModel = viewModel else { return }
+            nameAlbum.text = viewModel.album
+        }
     }
 }

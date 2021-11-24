@@ -9,13 +9,17 @@ import UIKit
 
 class AlbumsVC: UITableViewController {
     
-    var user: User?
-    private var albums: [Album] = []
-    
     override func viewDidLoad() {
         super.viewDidLoad()
-        getAlboms()
-        // Do any additional setup after loading the view.
+        viewModel?.getAlboms(clouser: { [weak self] error in
+            if let error = error {
+                print(error)
+            } else {
+                DispatchQueue.main.async {
+                    self?.tableView.reloadData()
+                }
+            }
+        })
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
@@ -26,37 +30,25 @@ class AlbumsVC: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return albums.count
+        viewModel?.numberOfRows() ?? 0
     }
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as! AlbumsCellVC
-        let album = albums[indexPath.row]
-        cell.configure(albums: album)
-        return cell
+        let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as? AlbumsCellVC
+        guard let tableViewCell = cell, let viewModel = viewModel else { return UITableViewCell() }
+        // достаем cellViewModel по indexPath
+        let cellViewModel = viewModel.cellViewModel(forIndexPath: indexPath)
+        // присваиваем cellViewModel
+        tableViewCell.viewModel = cellViewModel
+        return tableViewCell
     }
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        performSegue(withIdentifier: "goToPHotosVC", sender: albums[indexPath.row])
+        guard let viewModel = viewModel else { return }
+        // сохраним выбранный indexPath в TableViewViewModel
+        viewModel.selectRow(atIndexPath: indexPath)
+        performSegue(withIdentifier: "goToPHotosVC", sender: nil)
     }
     
-    private func getAlboms() {
-        
-        guard let userId = user?.id else { return }
-        let pathUrl = "\(ApiConstants.albumsPath)?userId=\(userId)"
-
-        guard let url = URL(string: pathUrl) else { return }
-
-        let task = URLSession.shared.dataTask(with: url) { (data, _, _) in
-            guard let data = data else { return }
-            do {
-                self.albums = try JSONDecoder().decode([Album].self, from: data)
-                print(self.albums)
-            } catch let error {
-                print(error)
-            }
-        }
-        
-        task.resume()
-    }
+    var viewModel: ViewModelAlbumsVCProtocol!
 }
 
